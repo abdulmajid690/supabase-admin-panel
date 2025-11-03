@@ -1,20 +1,22 @@
-import React, { useState } from 'react'
-import { Toaster } from '@/components/ui/sonner'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AuthProvider, useAuth } from '@/components/AuthProvider'
-import { Layout } from '@/components/Layout'
-import Login from '@/pages/Login'
-import Dashboard from '@/pages/Dashboard'
-import Users from '@/pages/Users'
-import Files from '@/pages/Files'
-import Settings from '@/pages/Settings'
+import React, { useState } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider, useAuth } from "@/components/AuthProvider";
+import { Layout } from "@/components/Layout";
+import Login from "@/pages/Login";
+import Dashboard from "@/pages/Dashboard";
+import Users from "@/pages/Users";
+import Files from "@/pages/Files";
+import Settings from "@/pages/Settings";
+import Products from "@/pages/Products";
+import Categories from "@/pages/Categories";
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
 function AppContent() {
-  const { user, loading } = useAuth()
-  const [currentPage, setCurrentPage] = useState('dashboard')
+  const { user, loading } = useAuth();
+  const [currentPage, setCurrentPage] = useState("dashboard");
 
   if (loading) {
     return (
@@ -24,33 +26,37 @@ function AppContent() {
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return <Login />
+    return <Login />;
   }
 
   const renderCurrentPage = () => {
     switch (currentPage) {
-      case 'dashboard':
-        return <Dashboard />
-      case 'users':
-        return <Users />
-      case 'files':
-        return <Files />
-      case 'settings':
-        return <Settings />
+      case "dashboard":
+        return <Dashboard />;
+      case "users":
+        return <Users />;
+      case "files":
+        return <Files />;
+      case "settings":
+        return <Settings />;
+      case "products":
+        return <Products />;
+      case "categories":
+        return <Categories />;
       default:
-        return <Dashboard />
+        return <Dashboard />;
     }
-  }
+  };
 
   return (
     <Layout currentPage={currentPage} onNavigate={setCurrentPage}>
       {renderCurrentPage()}
     </Layout>
-  )
+  );
 }
 
 const App = () => (
@@ -62,6 +68,6 @@ const App = () => (
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
-)
+);
 
-export default App
+export default App;
