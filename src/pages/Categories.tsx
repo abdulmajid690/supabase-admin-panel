@@ -56,7 +56,6 @@ import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import moment from "moment";
-import { console } from "inspector";
 
 const Categories = () => {
   const { toast } = useToast();
@@ -65,6 +64,9 @@ const Categories = () => {
   const [btnLoading, setBtnLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState("");
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(
+    null
+  );
 
   const filteredCategory = categories.filter((category) => {
     const matchesSearch = category.name
@@ -92,13 +94,28 @@ const Categories = () => {
   };
 
   const findCategory = async (id: number) => {
-    console.log("Fetching category with ID:", id);
-    // return;
-    // const res = await supabase.from("categories").select("*").eq("id", id);
-    // console.log(res);
-    // if (res?.status === 200) {
-    //   setCategories(res.data);
-    // }
+    const res = await supabase.from("categories").select("*").eq("id", id);
+    if (res?.status === 200) {
+      setIsAddCategoryOpen(true);
+      setName(res.data[0].name);
+      setEditingCategoryId(id);
+    }
+  };
+
+  const handleUpdateCategory = async () => {
+    if (name && editingCategoryId) {
+      setBtnLoading(true);
+      const { data, error, status } = await supabase
+        .from("categories")
+        .update({ name })
+        .eq("id", editingCategoryId);
+
+      if (status === 204) {
+        setIsAddCategoryOpen(false);
+        setBtnLoading(false);
+        setName("");
+      }
+    }
   };
 
   useEffect(() => {
@@ -111,7 +128,7 @@ const Categories = () => {
     };
 
     getData();
-  }, []);
+  }, [isAddCategoryOpen]);
 
   return (
     <div className="space-y-6">
@@ -153,11 +170,21 @@ const Categories = () => {
               </div>
               <DialogFooter>
                 <Button
-                  type="submit"
+                  type="button"
                   disabled={btnLoading}
-                  onClick={handleAddCategory}
+                  onClick={
+                    name && editingCategoryId
+                      ? handleUpdateCategory
+                      : handleAddCategory
+                  }
                 >
-                  {btnLoading ? "Creating..." : "Create Category"}
+                  {btnLoading
+                    ? name != "" && editingCategoryId
+                      ? "Updating..."
+                      : "Creating..."
+                    : name != "" && editingCategoryId
+                    ? "Update Category"
+                    : "Create Category"}
                 </Button>
               </DialogFooter>
             </form>
@@ -167,13 +194,13 @@ const Categories = () => {
 
       {/* Users Table */}
       <Card>
-        <CardHeader>
+        {/* <CardHeader>
           <CardTitle>Category ({filteredCategory.length})</CardTitle>
-          {/* <CardDescription>
+          <CardDescription>
             A list of all categories in your system including their role and
             status.
-          </CardDescription> */}
-        </CardHeader>
+          </CardDescription>
+        </CardHeader> */}
         <CardContent>
           <Table>
             <TableHeader>
