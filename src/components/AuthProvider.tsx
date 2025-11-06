@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
@@ -30,6 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const checkRef = useRef(null);
 
   useEffect(() => {
     // Get initial session
@@ -38,7 +46,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(session?.user ?? null);
       setLoading(false);
     });
-
     // Listen for auth changes
     const {
       data: { subscription },
@@ -50,6 +57,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const storeProfile = async () => {
+      const checkIsUserExist = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", session.user.email);
+
+      if (checkIsUserExist.data.length === 0) {
+        const addProfile = await supabase.from("profiles").insert([
+          {
+            username: session?.user?.identities[0]?.identity_data?.full_name,
+            email: session?.user?.email,
+          },
+        ]);
+      }
+    };
+    if (checkRef.current) {
+      return;
+    } else {
+      if (session?.user && session?.access_token) {
+        storeProfile();
+        checkRef.current = true;
+      }
+    }
+  }, [session]);
 
   const signOut = async () => {
     await supabase.auth.signOut();

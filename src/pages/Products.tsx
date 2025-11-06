@@ -71,6 +71,10 @@ const Products = () => {
     status: false,
   });
 
+  const getStatusBadgeVariant = (status: string) => {
+    return status ? "default" : "secondary";
+  };
+
   const filteredProduct = products.filter((product) => {
     const matchesSearch = product.name
       ?.toLowerCase()
@@ -88,8 +92,6 @@ const Products = () => {
       const { data, error, status } = await supabase
         .from("products")
         .insert([productState]);
-      // console.log("status", status);
-      // console.log("error", error);
       if (status === 201) {
         setIsAddProductOpen(false);
         setBtnLoading(false);
@@ -155,6 +157,7 @@ const Products = () => {
             name,
             price,
             description,
+            status,
             created_at,
             categories (
               id,
@@ -176,7 +179,6 @@ const Products = () => {
       getData();
     }
   }, [isAddProductOpen]);
-  console.log("products", products);
 
   return (
     <div className="space-y-6">
@@ -192,16 +194,18 @@ const Products = () => {
               Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-[45rem]">
             <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
+              <DialogTitle>
+                {editingProductId ? "Update" : "Add New"} Product
+              </DialogTitle>
               {/* <DialogDescription>
                 Create a new user account with specified role and permissions.
               </DialogDescription> */}
             </DialogHeader>
             <form>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
+              <div className="grid grid-cols-3 gap-4 py-4">
+                <div className="">
                   <Label htmlFor="fullName" className="text-right">
                     Name
                   </Label>
@@ -209,7 +213,7 @@ const Products = () => {
                     id="productName"
                     name="productName"
                     placeholder="product name..."
-                    className="col-span-3"
+                    className="col-span-3 mt-2"
                     value={productState.name}
                     onChange={(e) =>
                       setProductState({
@@ -220,7 +224,7 @@ const Products = () => {
                     required
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
+                <div className="">
                   <Label htmlFor="email" className="text-right">
                     Price
                   </Label>
@@ -228,7 +232,7 @@ const Products = () => {
                     id="price"
                     name="price"
                     placeholder="0.00"
-                    className="col-span-3"
+                    className="col-span-3 mt-2"
                     value={productState.price}
                     onChange={(e) =>
                       setProductState({
@@ -239,7 +243,7 @@ const Products = () => {
                     required
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
+                <div className="">
                   <Label htmlFor="fullName" className="text-right">
                     Description
                   </Label>
@@ -247,7 +251,7 @@ const Products = () => {
                     id="description"
                     name="description"
                     placeholder="details..."
-                    className="col-span-3"
+                    className="col-span-3 mt-2"
                     value={productState.description}
                     onChange={(e) =>
                       setProductState({
@@ -258,7 +262,7 @@ const Products = () => {
                     required
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
+                <div className="">
                   <Label htmlFor="role" className="text-right">
                     Category
                   </Label>
@@ -273,7 +277,7 @@ const Products = () => {
                       setProductState({ ...productState, category_id: value })
                     }
                   >
-                    <SelectTrigger className="col-span-3">
+                    <SelectTrigger className="col-span-3 mt-2">
                       <SelectValue placeholder="select category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -285,42 +289,36 @@ const Products = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Checkbox
-                    checked={productState.status}
-                    onChange={() =>
-                      setProductState({
-                        ...productState,
-                        status: !productState.status,
-                      })
-                    }
-                  />
-                  <Label htmlFor="status" className="text-right">
-                    Status
-                  </Label>
-                </div>
+              </div>
+              <div className="flex items-center">
+                <Checkbox
+                  id="status"
+                  className="mr-2"
+                  checked={productState.status}
+                  onClick={() =>
+                    setProductState({
+                      ...productState,
+                      status: !productState.status,
+                    })
+                  }
+                />
+                <Label htmlFor="status" className="text-right">
+                  Status
+                </Label>
               </div>
               <DialogFooter>
                 <Button
                   type="button"
                   disabled={btnLoading}
                   onClick={
-                    Object.values(productState).some((value) => value != "") &&
-                    editingProductId
-                      ? handleUpdateProduct
-                      : handleAddProduct
+                    editingProductId ? handleUpdateProduct : handleAddProduct
                   }
                 >
                   {btnLoading
-                    ? Object.values(productState).some(
-                        (value) => value === ""
-                      ) && editingProductId
+                    ? editingProductId
                       ? "Updating..."
                       : "Creating..."
-                    : Object.values(productState).some(
-                        (value) => value === ""
-                      ) && editingProductId
+                    : editingProductId
                     ? "Update Product"
                     : "Create Product"}
                 </Button>
@@ -348,6 +346,7 @@ const Products = () => {
                 <TableHead>Description</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -356,19 +355,6 @@ const Products = () => {
               {filteredProduct.map((row, index) => (
                 <TableRow key={row.id}>
                   <TableCell className="flex items-center space-x-3">
-                    {/* <Avatar className="h-8 w-8">
-                            <AvatarImage src={user.avatar_url || undefined} />
-                            <AvatarFallback>
-                              {user.full_name?.charAt(0).toUpperCase() ||
-                                user.email.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{user.full_name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {user.email}
-                            </div>
-                          </div> */}
                     {index + 1}
                   </TableCell>
                   {/* <TableCell>
@@ -404,6 +390,11 @@ const Products = () => {
                       {/* <Calendar className="mr-1 h-3 w-3" /> */}
                       {row.categories?.name}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusBadgeVariant(row.status)}>
+                      {row.status ? "active" : "inactive"}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     {row.created_at ? (
